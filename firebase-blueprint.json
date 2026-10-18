@@ -1,0 +1,163 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Staff or customer profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["super_admin", "manager", "cashier", "kitchen", "waiter", "inventory", "accountant", "delivery", "customer"] },
+        "branchId": { "type": "string" },
+        "phone": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "MenuCategory": {
+      "title": "MenuCategory",
+      "description": "Category for organizing menu items",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "displayOrder": { "type": "number" },
+        "icon": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "active"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Food menu item with pricing and variant options",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "price": { "type": "number" },
+        "available": { "type": "boolean" },
+        "imageUrl": { "type": "string" },
+        "station": { "type": "string", "enum": ["pizza", "grill", "fryer", "beverage", "general"] },
+        "sizes": {
+          "type": "array"
+        },
+        "modifiers": {
+          "type": "array"
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "categoryId", "price", "available"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Restaurant order across POS, online, and dine-in channels",
+      "type": "object",
+      "properties": {
+        "orderNumber": { "type": "string" },
+        "orderType": { "type": "string", "enum": ["dine_in", "takeaway", "delivery", "online"] },
+        "status": { "type": "string", "enum": ["pending", "preparing", "ready", "completed", "cancelled"] },
+        "paymentStatus": { "type": "string", "enum": ["unpaid", "paid", "refunded"] },
+        "paymentMethod": { "type": "string", "enum": ["cash", "card", "digital", "online_cod"] },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "tax": { "type": "number" },
+        "discount": { "type": "number" },
+        "deliveryFee": { "type": "number" },
+        "total": { "type": "number" },
+        "tableNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "deliveryAddress": { "type": "string" },
+        "notes": { "type": "string" },
+        "branchId": { "type": "string" },
+        "createdByUserId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderNumber", "orderType", "status", "paymentStatus", "items", "total", "createdAt"]
+    },
+    "Table": {
+      "title": "Table",
+      "description": "Floor dine-in table status",
+      "type": "object",
+      "properties": {
+        "tableNumber": { "type": "string" },
+        "capacity": { "type": "number" },
+        "status": { "type": "string", "enum": ["available", "occupied", "reserved", "cleaning"] },
+        "currentOrderId": { "type": "string" },
+        "section": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tableNumber", "capacity", "status"]
+    },
+    "Ingredient": {
+      "title": "Ingredient",
+      "description": "Raw material inventory balance",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "unit": { "type": "string" },
+        "currentStock": { "type": "number" },
+        "minStock": { "type": "number" },
+        "unitCost": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "unit", "currentStock", "minStock"]
+    },
+    "CashShift": {
+      "title": "CashShift",
+      "description": "Cashier till opening and closing reconciliation",
+      "type": "object",
+      "properties": {
+        "cashierId": { "type": "string" },
+        "cashierName": { "type": "string" },
+        "openingAmount": { "type": "number" },
+        "closingAmount": { "type": "number" },
+        "cashSales": { "type": "number" },
+        "cardSales": { "type": "number" },
+        "status": { "type": "string", "enum": ["open", "closed"] },
+        "notes": { "type": "string" },
+        "openedAt": { "type": "string", "format": "date-time" },
+        "closedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["cashierId", "openingAmount", "status", "openedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Staff and user profiles"
+    },
+    "/menuCategories/{categoryId}": {
+      "schema": "MenuCategory",
+      "description": "Food menu categories"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Food catalog products"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Active and past restaurant orders"
+    },
+    "/tables/{tableId}": {
+      "schema": "Table",
+      "description": "Dine-in floor tables"
+    },
+    "/ingredients/{ingredientId}": {
+      "schema": "Ingredient",
+      "description": "Inventory stock ingredients"
+    },
+    "/cashShifts/{shiftId}": {
+      "schema": "CashShift",
+      "description": "Till shifts"
+    }
+  }
+}

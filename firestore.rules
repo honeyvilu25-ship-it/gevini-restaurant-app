@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Helper functions for validation
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.email is string &&
+             data.role in ['super_admin', 'manager', 'cashier', 'kitchen', 'waiter', 'inventory', 'accountant', 'delivery', 'customer'];
+    }
+
+    function isValidMenuCategory(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.active is bool;
+    }
+
+    function isValidProduct(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.categoryId is string &&
+             data.price is number && data.price >= 0 &&
+             data.available is bool;
+    }
+
+    function isValidOrder(data) {
+      return data.orderNumber is string &&
+             data.orderType in ['dine_in', 'takeaway', 'delivery', 'online'] &&
+             data.status in ['pending', 'preparing', 'ready', 'completed', 'cancelled'] &&
+             data.paymentStatus in ['unpaid', 'paid', 'refunded'] &&
+             data.total is number && data.total >= 0 &&
+             data.items is list && data.items.size() > 0 &&
+             (!('rating' in data) || (data.rating is number && data.rating >= 1 && data.rating <= 5));
+    }
+
+    function isValidTable(data) {
+      return data.tableNumber is string &&
+             data.capacity is number && data.capacity > 0 &&
+             data.status in ['available', 'occupied', 'reserved', 'cleaning'];
+    }
+
+    function isValidIngredient(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.unit is string &&
+             data.currentStock is number &&
+             data.minStock is number;
+    }
+
+    function isValidCashShift(data) {
+      return data.cashierId is string &&
+             data.openingAmount is number &&
+             data.status in ['open', 'closed'];
+    }
+
+    // Collection: Users
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidUser(incoming());
+      allow delete: if false;
+    }
+
+    // Collection: Menu Categories
+    match /menuCategories/{categoryId} {
+      allow read: if true; // Public menu read
+      allow create, update: if isAuthenticated() && isValidMenuCategory(incoming());
+      allow delete: if isAuthenticated();
+    }
+
+    // Collection: Products
+    match /products/{productId} {
+      allow read: if true; // Public product menu read
+      allow create, update: if isAuthenticated() && isValidProduct(incoming());
+      allow delete: if isAuthenticated();
+    }
+
+    // Collection: Orders
+    match /orders/{orderId} {
+      allow read: if true; // Allows customers to track orders & view history by phone, and staff to manage orders
+      allow create: if isValidOrder(incoming());
+      allow update: if (isAuthenticated() && isValidOrder(incoming())) ||
+                       (isValidOrder(incoming()) && incoming().rating is number && incoming().rating >= 1 && incoming().rating <= 5);
+      allow delete: if false; // Orders are never deleted, only marked cancelled for audit trail
+    }
+
+    // Collection: Tables
+    match /tables/{tableId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidTable(incoming());
+      allow delete: if isAuthenticated();
+    }
+
+    // Collection: Ingredients
+    match /ingredients/{ingredientId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidIngredient(incoming());
+      allow delete: if isAuthenticated();
+    }
+
+    // Collection: Cash Shifts
+    match /cashShifts/{shiftId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidCashShift(incoming());
+      allow delete: if false;
+    }
+  }
+}

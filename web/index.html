@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEVINI Restaurant — Online Ordering & Order History (Malir 15, Karachi)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gevini: {
+              charcoal: '#121214',
+              surface: '#1A1A1E',
+              card: '#24242A',
+              border: '#33333D',
+              burgundy: '#8B1E1E',
+              burgundyLight: '#A62A2A',
+              gold: '#E5A93B',
+              cream: '#FDFBF7'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #121214; color: #FDFBF7; font-family: system-ui, -apple-system, sans-serif; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #33333D; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="border-b border-gevini-border bg-gevini-surface sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" id="brandLogoBtn">
+        <div class="w-10 h-10 rounded-full bg-gevini-burgundy flex items-center justify-center text-gevini-gold font-black shadow-lg">
+          <i class="fa-solid fa-pizza-slice text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-black tracking-wider text-gevini-cream">GEVINI</h1>
+          <p class="text-xs text-gevini-gold">Malir 15, Karachi • Online Order & POS Cloud</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs & Cart -->
+      <div class="flex items-center space-x-3">
+        <nav class="hidden md:flex items-center bg-gevini-card rounded-xl p-1 border border-gevini-border text-xs">
+          <button id="navMenuBtn" class="px-3 py-1.5 rounded-lg font-bold bg-gevini-burgundy text-white shadow transition">
+            <i class="fa-solid fa-utensils mr-1.5"></i> Menu
+          </button>
+          <button id="navHistoryBtn" class="px-3 py-1.5 rounded-lg font-semibold text-gray-400 hover:text-white transition">
+            <i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Order History
+          </button>
+        </nav>
+
+        <button id="viewCartBtn" class="flex items-center space-x-2 bg-gevini-burgundy hover:bg-gevini-burgundyLight px-4 py-2 rounded-xl text-sm font-bold shadow transition">
+          <i class="fa-solid fa-cart-shopping text-gevini-gold"></i>
+          <span>Cart (<span id="cartCount">0</span>)</span>
+          <span class="text-gevini-gold font-mono" id="cartHeaderTotal">PKR 0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile View Selector Bar -->
+  <div class="md:hidden flex border-b border-gevini-border bg-gevini-card text-xs">
+    <button id="mobileNavMenuBtn" class="flex-1 py-2.5 text-center font-bold text-gevini-gold border-b-2 border-gevini-gold">
+      <i class="fa-solid fa-utensils mr-1"></i> Food Menu
+    </button>
+    <button id="mobileNavHistoryBtn" class="flex-1 py-2.5 text-center font-semibold text-gray-400">
+      <i class="fa-solid fa-clock-rotate-left mr-1"></i> Order History
+    </button>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-r from-gevini-surface via-gevini-card to-gevini-surface py-7 border-b border-gevini-border">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="space-y-2">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 bg-gevini-burgundy/30 border border-gevini-burgundy rounded-full text-xs text-gevini-gold font-bold">
+          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+          <span>Malir 15 Kitchen Active • 30-45 Min Express Delivery</span>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-gevini-cream">
+          Authentic Crown Crust & Artisan Fast Food
+        </h2>
+        <p class="text-gray-400 text-xs md:text-sm max-w-xl">
+          Order signature stuffed crown pizzas, crispy gourmet zinger burgers, and loaded platters. Connected in real-time with our restaurant POS & Kitchen Display System.
+        </p>
+      </div>
+      <div class="bg-gevini-card p-4 rounded-2xl border border-gevini-border text-center shadow-xl min-w-[220px]">
+        <p class="text-xs text-gray-400">Order Hotline & WhatsApp</p>
+        <p class="text-lg font-bold text-gevini-gold mt-0.5">0300-GEVINI-1</p>
+        <p class="text-[11px] text-gray-500 mt-1">Cash on Delivery & Raast Accepted</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reorder Toast Notification -->
+  <div id="toastNotification" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 bg-gevini-burgundy border border-gevini-gold text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-sm">
+    <i class="fa-solid fa-circle-check text-gevini-gold text-lg"></i>
+    <span id="toastMessage">Items added to your cart!</span>
+  </div>
+
+  <!-- SECTION 1: MENU & CART VIEW -->
+  <main id="menuViewSection" class="max-w-7xl mx-auto px-4 py-8 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Menu Grid (2 Cols) -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <!-- Category Filters -->
+      <div class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scroll" id="categoryContainer">
+        <button class="cat-btn px-4 py-2 rounded-xl text-sm font-bold bg-gevini-burgundy text-white shadow" data-cat="all">All Items</button>
+      </div>
+
+      <!-- Food Items Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="productsGrid">
+        <div class="col-span-2 text-center py-12 text-gray-500">
+          <i class="fa-solid fa-spinner fa-spin text-3xl text-gevini-gold mb-3"></i>
+          <p>Connecting to GEVINI Live Firestore DB...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar: Active Cart & Live Order Tracker -->
+    <div class="space-y-6">
+      
+      <!-- Order Cart Box -->
+      <div id="cartCard" class="bg-gevini-surface rounded-2xl border border-gevini-border p-5 sticky top-24 shadow-xl">
+        <h3 class="text-lg font-bold text-gevini-cream flex items-center justify-between pb-3 border-b border-gevini-border">
+          <span><i class="fa-solid fa-bag-shopping text-gevini-gold mr-2"></i> Your Order</span>
+          <button id="clearCartBtn" class="text-xs text-red-400 hover:text-red-300">Clear</button>
+        </h3>
+
+        <!-- Cart Items List -->
+        <div id="cartItemsList" class="py-4 space-y-3 max-h-64 overflow-y-auto custom-scroll">
+          <p class="text-xs text-gray-500 text-center py-6">Your cart is empty.<br>Select items to begin ordering.</p>
+        </div>
+
+        <div class="pt-3 border-t border-gevini-border space-y-2 text-sm">
+          <div class="flex justify-between text-gray-400">
+            <span>Subtotal</span>
+            <span id="cartSubtotal" class="font-mono text-gevini-cream">PKR 0</span>
+          </div>
+          <div class="flex justify-between text-gray-400">
+            <span>Delivery Fee (Malir)</span>
+            <span id="cartDelivery" class="font-mono text-gevini-cream">PKR 150</span>
+          </div>
+          <div class="flex justify-between text-base font-bold text-gevini-gold pt-2 border-t border-gevini-border">
+            <span>Grand Total</span>
+            <span id="cartGrandTotal" class="font-mono">PKR 0</span>
+          </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <div class="mt-4 pt-4 border-t border-gevini-border space-y-2">
+          <input type="text" id="custName" placeholder="Full Name" class="w-full bg-gevini-card border border-gevini-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gevini-gold">
+          <input type="tel" id="custPhone" placeholder="Mobile / WhatsApp (0300...)" class="w-full bg-gevini-card border border-gevini-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gevini-gold">
+          <textarea id="custAddress" placeholder="Delivery Address (House/Street/Sector, Malir 15)" rows="2" class="w-full bg-gevini-card border border-gevini-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gevini-gold"></textarea>
+
+          <button id="placeOrderBtn" class="w-full mt-2 bg-gevini-burgundy hover:bg-gevini-burgundyLight text-white py-3 rounded-xl font-bold text-sm shadow-lg transition flex items-center justify-center space-x-2 disabled:opacity-50">
+            <i class="fa-solid fa-check"></i>
+            <span>Confirm Order (Cash on Delivery)</span>
+          </button>
+        </div>
+
+        <!-- Placed Order Live Status Tracker -->
+        <div id="liveOrderTracker" class="hidden mt-4 p-4 rounded-xl bg-gevini-card border border-gevini-gold/40">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-gevini-gold font-bold" id="trackedOrderNumber">Order #GV-0000</span>
+            <span class="px-2 py-0.5 rounded-full bg-gevini-burgundy text-white font-bold" id="trackedOrderStatus">PENDING</span>
+          </div>
+          <p class="text-xs text-gray-300 mt-2" id="trackedOrderMessage">Kitchen is reviewing your ticket...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- SECTION 2: ORDER HISTORY COMPONENT -->
+  <section id="orderHistorySection" class="hidden max-w-5xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+    <div class="bg-gevini-surface rounded-2xl border border-gevini-border p-6 shadow-xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-gevini-border">
+        <div>
+          <h2 class="text-2xl font-black text-gevini-cream flex items-center space-x-2">
+            <i class="fa-solid fa-clock-rotate-left text-gevini-gold"></i>
+            <span>Customer Order History</span>
+          </h2>
+          <p class="text-gray-400 text-xs mt-1">
+            Track your previous dining and delivery orders from GEVINI Malir 15, and easily reorder your favorite meals.
+          </p>
+        </div>
+
+        <!-- Dual Search Filters: Phone and Order Number -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-phone absolute left-3 top-3 text-gray-400 text-xs"></i>
+            <input type="tel" id="historyPhoneFilter" placeholder="Mobile # (0300...)" class="w-full bg-gevini-card border border-gevini-border rounded-xl pl-8 pr-3 py-2 text-xs text-white focus:outline-none focus:border-gevini-gold">
+          </div>
+          <div class="relative flex-1">
+            <i class="fa-solid fa-hashtag absolute left-3 top-3 text-gray-400 text-xs"></i>
+            <input type="text" id="historyOrderNumberFilter" placeholder="Order # (e.g. GV-1042)" class="w-full bg-gevini-card border border-gevini-border rounded-xl pl-8 pr-3 py-2 text-xs text-white focus:outline-none focus:border-gevini-gold">
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <button id="searchHistoryBtn" class="flex-1 sm:flex-none bg-gevini-burgundy hover:bg-gevini-burgundyLight text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Search</span>
+            </button>
+            <button id="clearFiltersBtn" title="Clear Filters" class="px-3 py-2 bg-gevini-card hover:bg-gevini-surface text-gray-400 hover:text-white rounded-xl text-xs font-semibold border border-gevini-border transition">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Recent Phone Tags -->
+      <div id="recentPhoneTags" class="hidden pt-3 flex items-center space-x-2 text-xs">
+        <span class="text-gray-400">Saved Phone:</span>
+        <button id="savedPhoneBtn" class="px-2.5 py-1 rounded-lg bg-gevini-card border border-gevini-border text-gevini-gold hover:border-gevini-gold transition"></button>
+      </div>
+
+      <!-- Order History List Container -->
+      <div id="historyResultsContainer" class="mt-6 space-y-4">
+        <div class="text-center py-12 text-gray-500">
+          <i class="fa-solid fa-receipt text-4xl text-gevini-gold/40 mb-3"></i>
+          <p class="text-sm">Enter your phone number above to look up your GEVINI orders.</p>
+          <p class="text-xs text-gray-600 mt-1">Orders placed via the customer website or POS will appear here.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-gevini-border bg-gevini-surface py-6 text-center text-xs text-gray-500 mt-auto">
+    <p>© 2026 GEVINI Restaurant OS. Malir 15, Main National Hwy, Karachi, Pakistan.</p>
+    <p class="mt-1">Synchronized in real-time across POS, Kitchen Display System (KDS), and Cloud Database.</p>
+  </footer>
+
+  <!-- Firebase Integration Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      doc,
+      updateDoc,
+      onSnapshot, 
+      addDoc, 
+      query,
+      where,
+      orderBy,
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      projectId: "gen-lang-client-0822044698",
+      apiKey: "AIzaSyDIqw_A_d52xkBb2Z-BAP7MpNVdiBSU3kw"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    // Connect to the specific named database
+    const db = getFirestore(app, "ai-studio-android-gevinire-57524d97-a127-49eb-b1c8-d7ae66681638");
+
+    let products = [];
+    let allOrders = [];
+    let cart = [];
+    let currentCategory = 'all';
+
+    // Elements
+    const productsGrid = document.getElementById('productsGrid');
+    const cartCount = document.getElementById('cartCount');
+    const cartHeaderTotal = document.getElementById('cartHeaderTotal');
+    const cartItemsList = document.getElementById('cartItemsList');
+    const cartSubtotal = document.getElementById('cartSubtotal');
+    const cartGrandTotal = document.getElementById('cartGrandTotal');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+
+    // Navigation Elements
+    const menuViewSection = document.getElementById('menuViewSection');
+    const orderHistorySection = document.getElementById('orderHistorySection');
+    const navMenuBtn = document.getElementById('navMenuBtn');
+    const navHistoryBtn = document.getElementById('navHistoryBtn');
+    const mobileNavMenuBtn = document.getElementById('mobileNavMenuBtn');
+    const mobileNavHistoryBtn = document.getElementById('mobileNavHistoryBtn');
+    const brandLogoBtn = document.getElementById('brandLogoBtn');
+
+    // History Elements
+    const historyPhoneFilter = document.getElementById('historyPhoneFilter');
+    const historyOrderNumberFilter = document.getElementById('historyOrderNumberFilter');
+    const searchHistoryBtn = document.getElementById('searchHistoryBtn');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    const historyResultsContainer = document.getElementById('historyResultsContainer');
+    const recentPhoneTags = document.getElementById('recentPhoneTags');
+    const savedPhoneBtn = document.getElementById('savedPhoneBtn');
+    const custPhone = document.getElementById('custPhone');
+    const toastNotification = document.getElementById('toastNotification');
+    const toastMessage = document.getElementById('toastMessage');
+
+    // Load saved phone from localStorage
+    const savedPhone = localStorage.getItem('gevini_customer_phone') || '';
+    if (savedPhone) {
+      custPhone.value = savedPhone;
+      historyPhoneFilter.value = savedPhone;
+      recentPhoneTags.classList.remove('hidden');
+      savedPhoneBtn.textContent = savedPhone;
+    }
+
+    savedPhoneBtn.addEventListener('click', () => {
+      historyPhoneFilter.value = savedPhoneBtn.textContent;
+      fetchOrderHistory(savedPhoneBtn.textContent);
+    });
+
+    // Tab Navigation Logic
+    function switchToMenu() {
+      menuViewSection.classList.remove('hidden');
+      orderHistorySection.classList.add('hidden');
+      navMenuBtn.className = "px-3 py-1.5 rounded-lg font-bold bg-gevini-burgundy text-white shadow transition";
+      navHistoryBtn.className = "px-3 py-1.5 rounded-lg font-semibold text-gray-400 hover:text-white transition";
+      mobileNavMenuBtn.className = "flex-1 py-2.5 text-center font-bold text-gevini-gold border-b-2 border-gevini-gold";
+      mobileNavHistoryBtn.className = "flex-1 py-2.5 text-center font-semibold text-gray-400";
+    }
+
+    function switchToHistory() {
+      menuViewSection.classList.add('hidden');
+      orderHistorySection.classList.remove('hidden');
+      navHistoryBtn.className = "px-3 py-1.5 rounded-lg font-bold bg-gevini-burgundy text-white shadow transition";
+      navMenuBtn.className = "px-3 py-1.5 rounded-lg font-semibold text-gray-400 hover:text-white transition";
+      mobileNavHistoryBtn.className = "flex-1 py-2.5 text-center font-bold text-gevini-gold border-b-2 border-gevini-gold";
+      mobileNavMenuBtn.className = "flex-1 py-2.5 text-center font-semibold text-gray-400";
+
+      // If phone or order number is already populated, auto search
+      const currentPhone = historyPhoneFilter.value.trim() || custPhone.value.trim();
+      const currentOrderNum = historyOrderNumberFilter.value.trim();
+      if (currentPhone || currentOrderNum) {
+        if (!historyPhoneFilter.value && currentPhone) historyPhoneFilter.value = currentPhone;
+        fetchOrderHistory(historyPhoneFilter.value.trim(), currentOrderNum);
+      }
+    }
+
+    navMenuBtn.addEventListener('click', switchToMenu);
+    mobileNavMenuBtn.addEventListener('click', switchToMenu);
+    brandLogoBtn.addEventListener('click', switchToMenu);
+    navHistoryBtn.addEventListener('click', switchToHistory);
+    mobileNavHistoryBtn.addEventListener('click', switchToHistory);
+
+    function showToast(msg) {
+      toastMessage.textContent = msg;
+      toastNotification.classList.remove('translate-y-24', 'opacity-0');
+      setTimeout(() => {
+        toastNotification.classList.add('translate-y-24', 'opacity-0');
+      }, 3500);
+    }
+
+    // Realtime Products Listener
+    onSnapshot(collection(db, "products"), (snapshot) => {
+      products = [];
+      snapshot.forEach((doc) => {
+        products.push({ id: doc.id, ...doc.data() });
+      });
+      renderProducts();
+    }, (error) => {
+      console.warn("Firestore products listener note:", error);
+      if (products.length === 0) {
+        products = [
+          { id: '1', name: 'GEVINI Crown Crust Pizza', description: 'Golden stuffed crown crust loaded with spicy chicken tikka, rich mozzarella & creamy ranch.', price: 1450, station: 'pizza' },
+          { id: '2', name: 'Malir Special Pizza', description: 'Double layer tikka & fajita chicken, black olives, sweet corn, mushrooms, and jalapeños.', price: 1500, station: 'pizza' },
+          { id: '3', name: 'Zinger Crunch Burger', description: 'Extra crispy battered chicken breast with spicy garlic sauce on toasted brioche.', price: 650, station: 'grill' },
+          { id: '4', name: 'Cheesy Garlic Bread', description: 'Toasted baguette with herb garlic butter and bubbling mozzarella.', price: 450, station: 'pizza' },
+          { id: '5', name: 'Fresh Mint Lemonade', description: 'Chilled hand-squeezed lemon, crushed garden mint and rock salt.', price: 250, station: 'beverage' }
+        ];
+        renderProducts();
+      }
+    });
+
+    // Realtime Orders Listener (keeps local order pool synchronized)
+    onSnapshot(collection(db, "orders"), (snapshot) => {
+      allOrders = [];
+      snapshot.forEach((doc) => {
+        allOrders.push({ id: doc.id, ...doc.data() });
+      });
+      // If user currently looking at order history, refresh results
+      if (!orderHistorySection.classList.contains('hidden') && historyPhoneFilter.value.trim()) {
+        fetchOrderHistory(historyPhoneFilter.value.trim());
+      }
+    }, (error) => {
+      console.warn("Orders listener error:", error);
+    });
+
+    function renderProducts() {
+      productsGrid.innerHTML = '';
+      const filtered = currentCategory === 'all' 
+        ? products 
+        : products.filter(p => p.categoryId === currentCategory);
+
+      if (filtered.length === 0) {
+        productsGrid.innerHTML = '<div class="col-span-2 text-center py-8 text-gray-500">No items available.</div>';
+        return;
+      }
+
+      filtered.forEach(p => {
+        const card = document.createElement('div');
+        card.className = "bg-gevini-surface rounded-2xl border border-gevini-border p-4 flex flex-col justify-between hover:border-gevini-burgundy transition shadow";
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between text-xs text-gevini-gold mb-2 font-bold uppercase tracking-wider">
+              <span><i class="fa-solid fa-fire mr-1"></i> ${p.station || 'Kitchen'}</span>
+              <span class="text-green-400">Available</span>
+            </div>
+            <h4 class="font-bold text-base text-gevini-cream">${p.name}</h4>
+            <p class="text-xs text-gray-400 mt-1 line-clamp-2">${p.description || ''}</p>
+          </div>
+          <div class="flex items-center justify-between mt-4 pt-3 border-t border-gevini-border">
+            <span class="text-base font-extrabold text-gevini-gold">PKR ${p.price.toLocaleString()}</span>
+            <button class="add-btn bg-gevini-burgundy hover:bg-gevini-burgundyLight text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1" data-id="${p.id}">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add</span>
+            </button>
+          </div>
+        `;
+        productsGrid.appendChild(card);
+      });
+
+      // Bind Add buttons
+      document.querySelectorAll('.add-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          const product = products.find(p => p.id === id);
+          if (product) addToCart(product);
+        });
+      });
+    }
+
+    function addToCart(product) {
+      const existing = cart.find(i => i.productId === product.id);
+      if (existing) {
+        existing.quantity += 1;
+        existing.itemTotal = existing.quantity * existing.unitPrice;
+      } else {
+        cart.push({
+          productId: product.id,
+          productName: product.name,
+          quantity: 1,
+          selectedSize: "Regular",
+          unitPrice: product.price,
+          itemTotal: product.price,
+          station: product.station || "pizza",
+          selectedModifiers: []
+        });
+      }
+      renderCart();
+      showToast(`Added ${product.name} to cart`);
+    }
+
+    function renderCart() {
+      const totalQty = cart.reduce((acc, i) => acc + i.quantity, 0);
+      const subtotal = cart.reduce((acc, i) => acc + i.itemTotal, 0);
+      const delivery = cart.length > 0 ? 150 : 0;
+      const grandTotal = subtotal + delivery;
+
+      cartCount.textContent = totalQty;
+      cartHeaderTotal.textContent = `PKR ${grandTotal.toLocaleString()}`;
+      cartSubtotal.textContent = `PKR ${subtotal.toLocaleString()}`;
+      cartGrandTotal.textContent = `PKR ${grandTotal.toLocaleString()}`;
+
+      if (cart.length === 0) {
+        cartItemsList.innerHTML = '<p class="text-xs text-gray-500 text-center py-6">Your cart is empty.<br>Select items to begin ordering.</p>';
+        return;
+      }
+
+      cartItemsList.innerHTML = '';
+      cart.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between text-xs bg-gevini-card p-2.5 rounded-xl";
+        row.innerHTML = `
+          <div class="flex-1 pr-2">
+            <p class="font-bold text-gevini-cream">${item.productName}</p>
+            <p class="text-gevini-gold font-mono">PKR ${item.itemTotal.toLocaleString()}</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button class="dec-btn w-6 h-6 rounded bg-gevini-border flex items-center justify-center text-gray-300" data-idx="${idx}">-</button>
+            <span class="font-bold text-white">${item.quantity}</span>
+            <button class="inc-btn w-6 h-6 rounded bg-gevini-burgundy flex items-center justify-center text-white" data-idx="${idx}">+</button>
+          </div>
+        `;
+        cartItemsList.appendChild(row);
+      });
+
+      document.querySelectorAll('.dec-btn').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.dataset.idx);
+          if (cart[idx].quantity > 1) {
+            cart[idx].quantity -= 1;
+            cart[idx].itemTotal = cart[idx].quantity * cart[idx].unitPrice;
+          } else {
+            cart.splice(idx, 1);
+          }
+          renderCart();
+        });
+      });
+
+      document.querySelectorAll('.inc-btn').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.dataset.idx);
+          cart[idx].quantity += 1;
+          cart[idx].itemTotal = cart[idx].quantity * cart[idx].unitPrice;
+          renderCart();
+        });
+      });
+    }
+
+    document.getElementById('clearCartBtn').addEventListener('click', () => {
+      cart = [];
+      renderCart();
+    });
+
+    // -------------------------------------------------------------
+    // ORDER HISTORY LOGIC
+    // -------------------------------------------------------------
+    searchHistoryBtn.addEventListener('click', () => {
+      const phone = historyPhoneFilter.value.trim();
+      const orderNum = historyOrderNumberFilter.value.trim();
+      if (!phone && !orderNum) {
+        return alert('Please enter a mobile number or order number to search.');
+      }
+      fetchOrderHistory(phone, orderNum);
+    });
+
+    clearFiltersBtn.addEventListener('click', () => {
+      historyPhoneFilter.value = '';
+      historyOrderNumberFilter.value = '';
+      historyResultsContainer.innerHTML = `
+        <div class="text-center py-12 text-gray-500">
+          <i class="fa-solid fa-receipt text-4xl text-gevini-gold/40 mb-3"></i>
+          <p class="text-sm">Enter your phone number or order number above to look up your GEVINI orders.</p>
+          <p class="text-xs text-gray-600 mt-1">Orders placed via the customer website or POS will appear here.</p>
+        </div>
+      `;
+    });
+
+    historyPhoneFilter.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const phone = historyPhoneFilter.value.trim();
+        const orderNum = historyOrderNumberFilter.value.trim();
+        if (phone || orderNum) fetchOrderHistory(phone, orderNum);
+      }
+    });
+
+    historyOrderNumberFilter.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const phone = historyPhoneFilter.value.trim();
+        const orderNum = historyOrderNumberFilter.value.trim();
+        if (phone || orderNum) fetchOrderHistory(phone, orderNum);
+      }
+    });
+
+    function cleanPhone(p) {
+      return (p || '').replace(/[^0-9]/g, '');
+    }
+
+    function fetchOrderHistory(rawPhone, rawOrderNumber) {
+      const targetPhoneClean = cleanPhone(rawPhone);
+      const cleanOrderNum = (rawOrderNumber || '').trim();
+
+      if (!targetPhoneClean && !cleanOrderNum) {
+        historyResultsContainer.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <i class="fa-solid fa-receipt text-4xl text-gevini-gold/40 mb-3"></i>
+            <p class="text-sm">Enter your phone number or order number above to look up your GEVINI orders.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Save phone to localStorage if provided
+      if (rawPhone && targetPhoneClean) {
+        localStorage.setItem('gevini_customer_phone', rawPhone);
+        recentPhoneTags.classList.remove('hidden');
+        savedPhoneBtn.textContent = rawPhone;
+      }
+
+      const queryLabel = [
+        rawPhone ? `Mobile: ${rawPhone}` : '',
+        cleanOrderNum ? `Order #: ${cleanOrderNum}` : ''
+      ].filter(Boolean).join(' • ');
+
+      historyResultsContainer.innerHTML = `
+        <div class="text-center py-8 text-gray-400">
+          <i class="fa-solid fa-spinner fa-spin text-2xl text-gevini-gold mb-2"></i>
+          <p class="text-xs">Searching orders for ${queryLabel}...</p>
+        </div>
+      `;
+
+      // Filter from orders pool matching phone and/or order number
+      const matchedOrders = allOrders.filter(order => {
+        let matchesPhone = true;
+        let matchesOrderNumber = true;
+
+        if (targetPhoneClean) {
+          const orderPhoneClean = cleanPhone(order.customerPhone);
+          matchesPhone = orderPhoneClean.includes(targetPhoneClean) || targetPhoneClean.includes(orderPhoneClean);
+        }
+
+        if (cleanOrderNum) {
+          const orderNumClean = (order.orderNumber || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+          const searchOrderNumClean = cleanOrderNum.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          matchesOrderNumber = orderNumClean.includes(searchOrderNumClean) || 
+                               (order.orderNumber || '').toLowerCase().includes(cleanOrderNum.toLowerCase()) ||
+                               order.id.toLowerCase().includes(cleanOrderNum.toLowerCase());
+        }
+
+        return matchesPhone && matchesOrderNumber;
+      });
+
+      // Sort newest first
+      matchedOrders.sort((a, b) => {
+        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return timeB - timeA;
+      });
+
+      renderOrderHistory(matchedOrders, queryLabel);
+    }
+
+    function renderOrderHistory(ordersList, queryLabel) {
+      if (ordersList.length === 0) {
+        historyResultsContainer.innerHTML = `
+          <div class="text-center py-10 bg-gevini-card rounded-2xl border border-gevini-border p-6">
+            <i class="fa-solid fa-pizza-slice text-3xl text-gray-500 mb-3"></i>
+            <h4 class="text-sm font-bold text-gevini-cream">No previous orders found</h4>
+            <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+              No orders matched: <strong class="text-gevini-gold">${queryLabel}</strong>.<br>
+              Check the order number (e.g., GV-1001) or mobile number used during checkout.
+            </p>
+            <div class="mt-4 flex items-center justify-center space-x-2">
+              <button id="resetHistorySearchBtn" class="px-4 py-2 bg-gevini-surface hover:bg-gevini-card text-gevini-gold border border-gevini-border rounded-xl text-xs font-bold transition">
+                Clear Search
+              </button>
+              <button id="goToMenuBtn" class="px-4 py-2 bg-gevini-burgundy hover:bg-gevini-burgundyLight text-white rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-utensils mr-1"></i> Browse Menu
+              </button>
+            </div>
+          </div>
+        `;
+        document.getElementById('goToMenuBtn')?.addEventListener('click', switchToMenu);
+        document.getElementById('resetHistorySearchBtn')?.addEventListener('click', () => {
+          historyPhoneFilter.value = '';
+          historyOrderNumberFilter.value = '';
+          if (savedPhone) {
+            historyPhoneFilter.value = savedPhone;
+            fetchOrderHistory(savedPhone, '');
+          }
+        });
+        return;
+      }
+
+      historyResultsContainer.innerHTML = '';
+      
+      const countHeader = document.createElement('div');
+      countHeader.className = "flex items-center justify-between text-xs text-gray-400 px-1";
+      countHeader.innerHTML = `
+        <span>Found <strong class="text-gevini-gold font-bold">${ordersList.length}</strong> order(s) for <strong>${queryLabel}</strong></span>
+        <span>Sorted by newest</span>
+      `;
+      historyResultsContainer.appendChild(countHeader);
+
+      ordersList.forEach(order => {
+        const card = document.createElement('div');
+        card.className = "bg-gevini-card rounded-2xl border border-gevini-border p-5 shadow-lg space-y-4 hover:border-gevini-burgundy/60 transition";
+        
+        const dateStr = order.createdAt?.toDate 
+          ? order.createdAt.toDate().toLocaleDateString('en-PK', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+          : 'Recent';
+
+        const status = (order.status || 'pending').toUpperCase();
+        let statusBadgeClass = "bg-orange-600/30 text-orange-400 border border-orange-500/40";
+        if (status === 'PREPARING') statusBadgeClass = "bg-blue-600/30 text-blue-400 border border-blue-500/40";
+        if (status === 'READY') statusBadgeClass = "bg-green-600/30 text-green-400 border border-green-500/40";
+        if (status === 'COMPLETED') statusBadgeClass = "bg-gray-700/60 text-gray-300 border border-gray-600";
+        if (status === 'CANCELLED') statusBadgeClass = "bg-red-600/30 text-red-400 border border-red-500/40";
+
+        const items = order.items || [];
+        const itemsListHtml = items.map(item => `
+          <div class="flex items-center justify-between text-xs py-1 border-b border-gevini-border/40 last:border-0">
+            <div>
+              <span class="font-bold text-white">${item.quantity}x</span>
+              <span class="text-gevini-cream ml-1">${item.productName}</span>
+              ${item.selectedSize ? `<span class="text-gray-400 text-[11px]">(${item.selectedSize})</span>` : ''}
+              ${item.selectedModifiers && item.selectedModifiers.length > 0 ? `<div class="text-[10px] text-gevini-gold pl-4">+ ${item.selectedModifiers.join(', ')}</div>` : ''}
+            </div>
+            <span class="font-mono text-gray-300">PKR ${(item.itemTotal || item.unitPrice || 0).toLocaleString()}</span>
+          </div>
+        `).join('');
+
+        // Rating component for COMPLETED orders
+        let ratingHtml = '';
+        if (status === 'COMPLETED') {
+          if (order.rating) {
+            const starsHtml = Array.from({ length: 5 }, (_, i) => {
+              return i < order.rating 
+                ? '<i class="fa-solid fa-star text-gevini-gold"></i>' 
+                : '<i class="fa-regular fa-star text-gray-600"></i>';
+            }).join('');
+
+            ratingHtml = `
+              <div class="mt-3 pt-3 border-t border-gevini-border/70 bg-gevini-surface/80 px-4 py-2.5 rounded-xl border border-gevini-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs text-gray-400 font-semibold">Your Review:</span>
+                  <div class="flex items-center text-sm space-x-0.5">
+                    ${starsHtml}
+                  </div>
+                  <span class="text-xs font-black text-gevini-gold font-mono">(${order.rating}/5)</span>
+                </div>
+                ${order.ratingFeedback ? `<p class="text-xs text-gray-300 italic truncate max-w-sm">"${order.ratingFeedback}"</p>` : ''}
+                <span class="text-[11px] text-green-400 font-bold flex items-center space-x-1">
+                  <i class="fa-solid fa-circle-check"></i>
+                  <span>Rating Recorded</span>
+                </span>
+              </div>
+            `;
+          } else {
+            ratingHtml = `
+              <div class="mt-3 pt-3 border-t border-gevini-border/70 bg-gevini-surface/80 p-3.5 rounded-xl border border-gevini-border space-y-2.5" id="ratingContainer-${order.id}">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <div>
+                    <p class="text-xs font-bold text-gevini-cream flex items-center space-x-1.5">
+                      <i class="fa-solid fa-star text-gevini-gold"></i>
+                      <span>Rate Your Experience</span>
+                    </p>
+                    <p class="text-[11px] text-gray-400">Order completed! Rate food taste, packaging, and rider delivery.</p>
+                  </div>
+                  <div class="flex items-center space-x-1 text-lg star-group" data-orderid="${order.id}">
+                    <button type="button" class="star-btn text-gray-500 hover:text-gevini-gold transition focus:outline-none" data-val="1"><i class="fa-regular fa-star"></i></button>
+                    <button type="button" class="star-btn text-gray-500 hover:text-gevini-gold transition focus:outline-none" data-val="2"><i class="fa-regular fa-star"></i></button>
+                    <button type="button" class="star-btn text-gray-500 hover:text-gevini-gold transition focus:outline-none" data-val="3"><i class="fa-regular fa-star"></i></button>
+                    <button type="button" class="star-btn text-gray-500 hover:text-gevini-gold transition focus:outline-none" data-val="4"><i class="fa-regular fa-star"></i></button>
+                    <button type="button" class="star-btn text-gray-500 hover:text-gevini-gold transition focus:outline-none" data-val="5"><i class="fa-regular fa-star"></i></button>
+                    <span class="text-xs text-gevini-gold font-bold ml-1.5 rating-label" id="ratingLabel-${order.id}">Tap stars</span>
+                  </div>
+                </div>
+                <div class="hidden rating-input-row flex items-center space-x-2 pt-1" id="ratingInputRow-${order.id}">
+                  <input type="text" id="feedbackInput-${order.id}" placeholder="Write a short review (e.g. Delicious crown crust, hot delivery)..." class="flex-1 bg-gevini-card border border-gevini-border rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-gevini-gold">
+                  <button class="submit-rating-btn bg-gevini-burgundy hover:bg-gevini-burgundyLight text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1 shadow" data-orderid="${order.id}">
+                    <i class="fa-solid fa-paper-plane text-gevini-gold text-xs"></i>
+                    <span>Submit</span>
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+        }
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gevini-border">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-base font-black text-gevini-cream">#${order.orderNumber || 'GV-ORDER'}</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${statusBadgeClass}">
+                  ${status}
+                </span>
+                <span class="text-[11px] px-2 py-0.5 rounded-md bg-gevini-surface text-gevini-gold border border-gevini-border font-semibold">
+                  ${(order.orderType || 'Delivery').toUpperCase()}
+                </span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1"><i class="fa-regular fa-calendar mr-1"></i> ${dateStr}</p>
+            </div>
+            
+            <div class="text-left sm:text-right">
+              <span class="text-xs text-gray-400">Total Paid:</span>
+              <p class="text-lg font-black text-gevini-gold font-mono">PKR ${(order.total || 0).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <!-- Items Breakdown -->
+          <div class="bg-gevini-surface rounded-xl p-3 border border-gevini-border/60">
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Order Summary</p>
+            <div class="space-y-1">
+              ${itemsListHtml || '<p class="text-xs text-gray-500">Item details not stored.</p>'}
+            </div>
+          </div>
+
+          <!-- Customer Star Rating Area for Completed Orders -->
+          ${ratingHtml}
+
+          <!-- Delivery Address & Reorder Action Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            <div class="text-xs text-gray-400 flex items-center space-x-2">
+              <i class="fa-solid fa-location-dot text-gevini-gold"></i>
+              <span class="truncate max-w-xs">${order.deliveryAddress || 'Dine-In / Store Counter'}</span>
+            </div>
+
+            <button class="reorder-btn bg-gevini-burgundy hover:bg-gevini-burgundyLight text-white px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 shadow-lg" data-orderid="${order.id}">
+              <i class="fa-solid fa-rotate-right text-gevini-gold"></i>
+              <span>Reorder All Items</span>
+            </button>
+          </div>
+        `;
+
+        historyResultsContainer.appendChild(card);
+      });
+
+      // Track active rating selections
+      const pendingRatings = {};
+
+      // Bind Star Rating click events
+      document.querySelectorAll('.star-group').forEach(group => {
+        const orderId = group.dataset.orderid;
+        const starButtons = group.querySelectorAll('.star-btn');
+        const ratingLabel = document.getElementById(`ratingLabel-${orderId}`);
+        const inputRow = document.getElementById(`ratingInputRow-${orderId}`);
+
+        const ratingLabels = {
+          1: '1/5 — Poor',
+          2: '2/5 — Fair',
+          3: '3/5 — Good',
+          4: '4/5 — Very Good',
+          5: '5/5 — Excellent!'
+        };
+
+        starButtons.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const val = parseInt(btn.dataset.val);
+            pendingRatings[orderId] = val;
+
+            // Update stars appearance
+            starButtons.forEach(b => {
+              const bVal = parseInt(b.dataset.val);
+              if (bVal <= val) {
+                b.innerHTML = '<i class="fa-solid fa-star text-gevini-gold"></i>';
+              } else {
+                b.innerHTML = '<i class="fa-regular fa-star text-gray-500"></i>';
+              }
+            });
+
+            if (ratingLabel) ratingLabel.textContent = ratingLabels[val] || `${val}/5`;
+            if (inputRow) inputRow.classList.remove('hidden');
+          });
+        });
+      });
+
+      // Bind Submit Rating Buttons
+      document.querySelectorAll('.submit-rating-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const orderId = btn.dataset.orderid;
+          const ratingVal = pendingRatings[orderId];
+          if (!ratingVal) return alert('Please select a star rating (1 to 5).');
+
+          const feedbackEl = document.getElementById(`feedbackInput-${orderId}`);
+          const feedbackText = feedbackEl ? feedbackEl.value.trim() : '';
+
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...';
+
+          try {
+            await updateDoc(doc(db, "orders", orderId), {
+              rating: ratingVal,
+              ratingFeedback: feedbackText,
+              ratedAt: serverTimestamp()
+            });
+
+            // Update in local array so re-render reflects it
+            const ord = allOrders.find(o => o.id === orderId);
+            if (ord) {
+              ord.rating = ratingVal;
+              ord.ratingFeedback = feedbackText;
+            }
+
+            // Replace container with static rating badge
+            const container = document.getElementById(`ratingContainer-${orderId}`);
+            if (container) {
+              const starsHtml = Array.from({ length: 5 }, (_, i) => {
+                return i < ratingVal 
+                  ? '<i class="fa-solid fa-star text-gevini-gold"></i>' 
+                  : '<i class="fa-regular fa-star text-gray-600"></i>';
+              }).join('');
+
+              container.outerHTML = `
+                <div class="mt-3 pt-3 border-t border-gevini-border/70 bg-gevini-surface/80 px-4 py-2.5 rounded-xl border border-gevini-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs text-gray-400 font-semibold">Your Review:</span>
+                    <div class="flex items-center text-sm space-x-0.5">
+                      ${starsHtml}
+                    </div>
+                    <span class="text-xs font-black text-gevini-gold font-mono">(${ratingVal}/5)</span>
+                  </div>
+                  ${feedbackText ? `<p class="text-xs text-gray-300 italic truncate max-w-sm">"${feedbackText}"</p>` : ''}
+                  <span class="text-[11px] text-green-400 font-bold flex items-center space-x-1">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Rating Recorded</span>
+                  </span>
+                </div>
+              `;
+            }
+
+            showToast(`Thank you for rating GEVINI! (${ratingVal} Stars ⭐)`);
+          } catch (err) {
+            console.error("Error saving rating:", err);
+            alert("Could not save rating: " + err.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane text-gevini-gold text-xs"></i> Submit';
+          }
+        });
+      });
+
+      // Bind all Reorder buttons
+      document.querySelectorAll('.reorder-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const orderId = e.currentTarget.dataset.orderid;
+          const targetOrder = ordersList.find(o => o.id === orderId);
+          if (!targetOrder || !targetOrder.items) return;
+
+          // Push items into current cart
+          targetOrder.items.forEach(pastItem => {
+            const existing = cart.find(i => i.productName === pastItem.productName && i.selectedSize === pastItem.selectedSize);
+            if (existing) {
+              existing.quantity += (pastItem.quantity || 1);
+              existing.itemTotal = existing.quantity * existing.unitPrice;
+            } else {
+              cart.push({
+                productId: pastItem.productId || ('reorder_' + Math.random()),
+                productName: pastItem.productName,
+                quantity: pastItem.quantity || 1,
+                selectedSize: pastItem.selectedSize || "Regular",
+                unitPrice: pastItem.unitPrice || (pastItem.itemTotal / (pastItem.quantity || 1)),
+                itemTotal: pastItem.itemTotal || (pastItem.unitPrice * pastItem.quantity),
+                station: pastItem.station || "pizza",
+                selectedModifiers: pastItem.selectedModifiers || []
+              });
+            }
+          });
+
+          // Prefill customer contact details
+          if (targetOrder.customerName && !document.getElementById('custName').value) {
+            document.getElementById('custName').value = targetOrder.customerName;
+          }
+          if (targetOrder.customerPhone && !document.getElementById('custPhone').value) {
+            document.getElementById('custPhone').value = targetOrder.customerPhone;
+          }
+          if (targetOrder.deliveryAddress && !document.getElementById('custAddress').value) {
+            document.getElementById('custAddress').value = targetOrder.deliveryAddress;
+          }
+
+          renderCart();
+          showToast(`Reordered ${targetOrder.items.length} items from #${targetOrder.orderNumber}!`);
+
+          // Switch back to Menu & Cart view and highlight cart
+          switchToMenu();
+          const cartCard = document.getElementById('cartCard');
+          cartCard.scrollIntoView({ behavior: 'smooth' });
+          cartCard.classList.add('ring-2', 'ring-gevini-gold');
+          setTimeout(() => cartCard.classList.remove('ring-2', 'ring-gevini-gold'), 2000);
+        });
+      });
+    }
+
+    // Place Order Directly to Firestore
+    placeOrderBtn.addEventListener('click', async () => {
+      if (cart.length === 0) return alert('Your cart is empty!');
+      const name = document.getElementById('custName').value.trim() || 'Online Customer';
+      const phone = document.getElementById('custPhone').value.trim();
+      const address = document.getElementById('custAddress').value.trim();
+
+      if (!phone) return alert('Please enter your mobile number for delivery verification.');
+      if (!address) return alert('Please enter your complete delivery address in Malir/Karachi.');
+
+      // Save phone for history lookup
+      localStorage.setItem('gevini_customer_phone', phone);
+      historyPhoneFilter.value = phone;
+
+      placeOrderBtn.disabled = true;
+      placeOrderBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...';
+
+      const subtotal = cart.reduce((acc, i) => acc + i.itemTotal, 0);
+      const deliveryFee = 150;
+      const grandTotal = subtotal + deliveryFee;
+      const orderNumber = "GV-" + Math.floor(1000 + Math.random() * 9000);
+
+      const orderPayload = {
+        orderNumber: orderNumber,
+        orderType: "online",
+        status: "pending",
+        paymentStatus: "unpaid",
+        paymentMethod: "online_cod",
+        items: cart,
+        subtotal: subtotal,
+        tax: 0,
+        discount: 0,
+        deliveryFee: deliveryFee,
+        total: grandTotal,
+        customerName: name,
+        customerPhone: phone,
+        deliveryAddress: address,
+        branchId: "karachi_malir_15",
+        createdByUserId: "web_guest",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      try {
+        const docRef = await addDoc(collection(db, "orders"), orderPayload);
+        cart = [];
+        renderCart();
+
+        document.getElementById('liveOrderTracker').classList.remove('hidden');
+        document.getElementById('trackedOrderNumber').textContent = `Order #${orderNumber}`;
+        document.getElementById('trackedOrderStatus').textContent = 'PENDING';
+        document.getElementById('trackedOrderMessage').textContent = 'Order submitted to GEVINI Kitchen! Watching for updates...';
+
+        showToast(`Order #${orderNumber} placed successfully!`);
+
+        // Listen for status changes on this specific order
+        onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const status = (data.status || 'pending').toUpperCase();
+            document.getElementById('trackedOrderStatus').textContent = status;
+            if (status === 'PREPARING') {
+              document.getElementById('trackedOrderMessage').textContent = 'In the Oven! Kitchen is baking your order.';
+            } else if (status === 'READY') {
+              document.getElementById('trackedOrderMessage').textContent = 'Dispatched! Rider is on the way to your address.';
+            } else if (status === 'COMPLETED') {
+              document.getElementById('trackedOrderMessage').textContent = 'Order Delivered! Enjoy your GEVINI meal.';
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Error creating order:", err);
+        alert('Could not send order to database: ' + err.message);
+      } finally {
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Confirm Order (Cash on Delivery)';
+      }
+    });
+  </script>
+</body>
+</html>

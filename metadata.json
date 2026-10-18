@@ -1,0 +1,6 @@
+{
+  "name": "GEVINI Restaurant OS",
+  "description": "Complete restaurant management, POS, kitchen display, and online ordering ecosystem for GEVINI Restaurant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
